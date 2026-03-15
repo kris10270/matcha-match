@@ -568,6 +568,160 @@ body {
 .tier-4 { color: #2d8a2d; }
 .tier-5 { color: #1a6b1a; }
 
+/* Community rating card */
+.community-card {
+  background: white;
+  border-radius: 20px;
+  padding: 28px 24px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+  margin-bottom: 24px;
+  animation: fadeUp 0.5s ease 0.6s both;
+}
+
+.community-card.hidden { display: none; }
+
+.community-card h3 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.2rem;
+  margin-bottom: 6px;
+  color: var(--matcha-800);
+}
+
+.community-card .community-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-light);
+  margin-bottom: 20px;
+}
+
+.rating-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.rating-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  border: 2px solid var(--matcha-200);
+  background: var(--cream);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--matcha-700);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rating-btn:hover {
+  border-color: var(--matcha-500);
+  background: var(--matcha-50);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(45, 138, 45, 0.12);
+}
+
+.rating-btn.selected {
+  border-color: var(--matcha-600);
+  background: var(--matcha-600);
+  color: white;
+  transform: scale(1.08);
+  box-shadow: 0 4px 15px rgba(45, 138, 45, 0.25);
+}
+
+.rating-btn:disabled {
+  cursor: default;
+  opacity: 0.5;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.rating-btn:disabled:not(.selected) {
+  border-color: var(--cream-dark);
+  background: var(--cream);
+  color: var(--text-light);
+}
+
+.community-thank-you {
+  display: none;
+  text-align: center;
+  padding: 12px 0 4px;
+  font-size: 0.9rem;
+  color: var(--matcha-600);
+  font-weight: 500;
+}
+
+.community-thank-you.active { display: block; }
+
+.community-count {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-light);
+  margin-top: 8px;
+}
+
+/* Community KNN score display */
+.community-score-card {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+  margin-bottom: 24px;
+  text-align: center;
+  animation: fadeUp 0.5s ease 0.45s both;
+  position: relative;
+  overflow: hidden;
+}
+
+.community-score-card.hidden { display: none; }
+
+.community-score-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--matcha-200), var(--matcha-400));
+}
+
+.community-score-card .community-score-label {
+  font-size: 0.85rem;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.community-score-card .community-score-value {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--matcha-600);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.community-score-card .community-score-out-of {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  font-weight: 400;
+}
+
+.community-score-card .community-score-note {
+  font-size: 0.78rem;
+  color: var(--text-light);
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--cream-dark);
+}
+
+.community-score-card.score-differs {
+  border: 2px solid var(--matcha-200);
+}
+
 /* Responsive */
 @media (max-width: 480px) {
   .container { padding: 24px 16px 60px; }
@@ -575,6 +729,7 @@ body {
   .score-value { font-size: 2.8rem; }
   .score-tier-name { font-size: 1.8rem; }
   .drop-zone { padding: 48px 24px; }
+  .rating-btn { width: 46px; height: 46px; font-size: 1.1rem; }
 }
 </style>
 </head>
@@ -622,10 +777,30 @@ body {
       <div class="confidence-note" id="confidenceNote"></div>
     </div>
 
+    <div class="community-score-card hidden" id="communityScoreCard">
+      <div class="community-score-label">Community says</div>
+      <div class="community-score-value"><span id="communityScoreNum"></span><span class="community-score-out-of"> / 5</span></div>
+      <div class="community-score-note" id="communityScoreNote"></div>
+    </div>
+
     <div class="color-card" id="colorCard">
       <h3>What the Model Sees</h3>
       <div class="color-swatch-row" id="swatchRow"></div>
       <div class="color-stats" id="colorStats"></div>
+    </div>
+
+    <div class="community-card hidden" id="communityCard">
+      <h3>Rate This Matcha Yourself</h3>
+      <p class="community-subtitle">Help train the community model with your rating</p>
+      <div class="rating-buttons" id="ratingButtons">
+        <button class="rating-btn" data-rating="1">1</button>
+        <button class="rating-btn" data-rating="2">2</button>
+        <button class="rating-btn" data-rating="3">3</button>
+        <button class="rating-btn" data-rating="4">4</button>
+        <button class="rating-btn" data-rating="5">5</button>
+      </div>
+      <div class="community-thank-you" id="communityThankYou">Thanks for your rating!</div>
+      <div class="community-count" id="communityCount"></div>
     </div>
 
     <div class="try-again">
@@ -688,6 +863,104 @@ const TIERS = [
   { min: 3.5, max: 4.5, name: "Matcha Made My Day",     subtitle: "Now we're talking quality",          cls: "tier-4" },
   { min: 4.5, max: 5.1, name: "Matcha Made in Heaven",  subtitle: "Peak green. Ceremonial vibes.",      cls: "tier-5" },
 ];
+
+// ============================================================
+// FIREBASE CONFIG (fill in your Realtime Database URL to enable community features)
+// ============================================================
+const FIREBASE_URL = "https://matcha-match-b66b0-default-rtdb.firebaseio.com";
+
+// ============================================================
+// SCALER CONSTANTS (for KNN feature normalization)
+// ============================================================
+const SCALER_MEAN = [147.22672441270618,145.73638000488282,112.30270267062717,45.13934161927965,41.650802813635934,48.95107510884603,-1.490346306976345,33.43367671966553,1.000837778382831,1.8289274533589681,62.668323304918076,0.304092320965396,0.6021200862195757,59.72906735738118,-5.07701594763332,18.008999819225735,88.47222222222223,115.47777777777777,148.70555555555555,176.68333333333334,197.74666663275823,0.0,0.040016894038712454,0.13471025543468487,0.18088569312563374,0.23338281102478503,0.22224748763773178,0.1570153403406342,0.031741518243345326,0.304092320965396,0.1704680653082,0.2729886728856299,12.702748457590738,24.078059842851427,31.341969362894694,16.61483557489183,2.809136974397633,23.44644570880466,0.2558408865498172,-5.215688361413777,0.45788295446998545];
+const SCALER_SCALE = [20.51484817662535,18.93953792666146,20.105158887918353,10.359482842553817,8.21501654087579,11.034063882616717,8.983281918218847,10.359423558498106,0.07213562500086419,1.2621353169449547,19.17217939211682,0.08821087095464865,0.0759066313947027,7.179218816037966,3.8094642625787203,5.660847013632387,23.60559739542852,24.45414201578938,24.54959769351792,22.367287621782744,16.921013912480323,1.0,0.04379266448494501,0.09216743640903914,0.09127499803679438,0.11438299889332045,0.1142413488205252,0.13863666673875885,0.04309158515399304,0.08821087095464865,0.06233678982165954,0.11140989839543197,4.963967435283685,7.609968798964556,8.761981410294014,5.742124954209149,8.374037975758682,10.866986786127626,0.08763607363831799,3.558499194406451,0.17186418405311082];
+
+// ============================================================
+// COMMUNITY KNN
+// ============================================================
+let communitySubmissions = [];
+let currentFeatures = null;
+let hasSubmittedRating = false;
+
+function firebaseEnabled() {
+  return FIREBASE_URL && FIREBASE_URL.length > 0;
+}
+
+async function fetchCommunityData() {
+  if (!firebaseEnabled()) return;
+  try {
+    const resp = await fetch(FIREBASE_URL + '/submissions.json');
+    if (!resp.ok) return;
+    const data = await resp.json();
+    if (!data) { communitySubmissions = []; return; }
+    communitySubmissions = Object.values(data).filter(
+      s => s && s.features && s.features.length === 41 && s.rating >= 1 && s.rating <= 5
+    );
+  } catch (e) {
+    console.warn('Could not fetch community data:', e);
+    communitySubmissions = [];
+  }
+}
+
+async function submitCommunityRating(rating) {
+  if (!firebaseEnabled() || !currentFeatures) return;
+  const payload = {
+    features: currentFeatures,
+    rating: rating,
+    timestamp: Date.now()
+  };
+  try {
+    await fetch(FIREBASE_URL + '/submissions.json', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    // Add to local cache too
+    communitySubmissions.push(payload);
+  } catch (e) {
+    console.warn('Could not submit rating:', e);
+  }
+}
+
+function normalizeFeatures(features) {
+  return features.map((v, i) => {
+    const scale = SCALER_SCALE[i];
+    return scale === 0 ? 0 : (v - SCALER_MEAN[i]) / scale;
+  });
+}
+
+function euclideanDistance(a, b) {
+  let sum = 0;
+  for (let i = 0; i < a.length; i++) {
+    const d = a[i] - b[i];
+    sum += d * d;
+  }
+  return Math.sqrt(sum);
+}
+
+function knnPredict(features, k) {
+  if (communitySubmissions.length < 5) return null;
+  k = Math.min(k || 5, communitySubmissions.length);
+  const normInput = normalizeFeatures(features);
+
+  const distances = communitySubmissions.map(s => ({
+    distance: euclideanDistance(normInput, normalizeFeatures(s.features)),
+    rating: s.rating
+  }));
+
+  distances.sort((a, b) => a.distance - b.distance);
+  const neighbors = distances.slice(0, k);
+
+  // Weighted average by 1/distance
+  let weightSum = 0, valueSum = 0;
+  for (const n of neighbors) {
+    const w = n.distance === 0 ? 1000 : 1 / n.distance;
+    weightSum += w;
+    valueSum += w * n.rating;
+  }
+
+  return weightSum > 0 ? valueSum / weightSum : null;
+}
 
 // ============================================================
 // ONNX SESSION
@@ -983,8 +1256,11 @@ async function processImage(dataUrl) {
 
     try {
       const { features, matchaColor, saturation, labA } = extractFeatures(imageData, 400, 400);
+      currentFeatures = features.slice();
+      hasSubmittedRating = false;
       const score = await predict(features);
-      showResults(score, matchaColor, saturation, labA);
+      const communityScore = knnPredict(features, 5);
+      showResults(score, matchaColor, saturation, labA, communityScore);
     } catch (err) {
       console.error('Prediction error:', err);
       alert('Error analyzing image. Please try another photo.');
@@ -995,7 +1271,7 @@ async function processImage(dataUrl) {
   img.src = dataUrl;
 }
 
-function showResults(score, matchaColor, saturation, labA) {
+function showResults(score, matchaColor, saturation, labA, communityScore) {
   const roundedScore = Math.round(score * 10) / 10;
   const tier = TIERS.find(t => score >= t.min && score < t.max) || TIERS[TIERS.length - 1];
 
@@ -1052,6 +1328,46 @@ function showResults(score, matchaColor, saturation, labA) {
     </div>
   `;
 
+  // Community KNN score display
+  const communityScoreCard = document.getElementById('communityScoreCard');
+  if (firebaseEnabled() && communityScore !== null && communityScore !== undefined) {
+    const roundedCommunity = Math.round(communityScore * 10) / 10;
+    document.getElementById('communityScoreNum').textContent = roundedCommunity.toFixed(1);
+    document.getElementById('communityScoreNote').textContent =
+      'Based on ' + communitySubmissions.length + ' community rating' + (communitySubmissions.length === 1 ? '' : 's') + ' using KNN (k=5)';
+    communityScoreCard.classList.remove('hidden');
+    // Highlight if scores differ notably
+    if (Math.abs(roundedScore - roundedCommunity) > 0.5) {
+      communityScoreCard.classList.add('score-differs');
+    } else {
+      communityScoreCard.classList.remove('score-differs');
+    }
+  } else {
+    communityScoreCard.classList.add('hidden');
+  }
+
+  // Community rating submission UI
+  const communityCard = document.getElementById('communityCard');
+  if (firebaseEnabled()) {
+    communityCard.classList.remove('hidden');
+    // Reset buttons state
+    const btns = document.querySelectorAll('.rating-btn');
+    btns.forEach(btn => {
+      btn.classList.remove('selected');
+      btn.disabled = false;
+    });
+    document.getElementById('communityThankYou').classList.remove('active');
+    // Show count
+    const countEl = document.getElementById('communityCount');
+    if (communitySubmissions.length > 0) {
+      countEl.textContent = 'Join ' + communitySubmissions.length + ' other' + (communitySubmissions.length === 1 ? '' : 's') + ' who\'ve rated their matchas';
+    } else {
+      countEl.textContent = 'Be the first to rate!';
+    }
+  } else {
+    communityCard.classList.add('hidden');
+  }
+
   resultsDiv.classList.add('active');
 }
 
@@ -1072,16 +1388,45 @@ function reset() {
   previewImg.src = '';
   fileInput.value = '';
   resultsDiv.classList.remove('active');
+  currentFeatures = null;
+  hasSubmittedRating = false;
+  document.getElementById('communityScoreCard').classList.add('hidden');
+  document.getElementById('communityCard').classList.add('hidden');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+// Rating button click handlers
+document.getElementById('ratingButtons').addEventListener('click', async (e) => {
+  const btn = e.target.closest('.rating-btn');
+  if (!btn || hasSubmittedRating || !currentFeatures) return;
+
+  const rating = parseInt(btn.dataset.rating);
+  hasSubmittedRating = true;
+
+  // Visual feedback
+  btn.classList.add('selected');
+  const btns = document.querySelectorAll('.rating-btn');
+  btns.forEach(b => { b.disabled = true; });
+
+  // Submit to Firebase
+  await submitCommunityRating(rating);
+
+  // Show thank you
+  document.getElementById('communityThankYou').classList.add('active');
+
+  // Update count
+  const countEl = document.getElementById('communityCount');
+  countEl.textContent = 'Join ' + communitySubmissions.length + ' other' + (communitySubmissions.length === 1 ? '' : 's') + ' who\'ve rated their matchas';
+});
 
 // Configure ONNX Runtime
 ort.env.wasm.numThreads = 1;
 
-// Preload model
+// Preload model and community data
 loadModel().catch(err => {
   console.error('Model load error:', err);
 });
+fetchCommunityData();
 </script>
 </body>
 </html>
