@@ -844,7 +844,8 @@ body {
   </details>
 
   <footer class="footer">
-    Built by <a href="https://claude.ai">Claude Opus 4.6</a> with scikit-learn + ONNX Runtime Web.
+    Built by <a href="https://claude.ai">Claude Opus 4.6</a> with scikit-learn + ONNX Runtime Web.<br>
+    <span id="versionHash" style="font-size:0.7rem;color:var(--text-light);opacity:0.6"></span>
   </footer>
 </div>
 
@@ -1427,6 +1428,12 @@ loadModel().catch(err => {
   console.error('Model load error:', err);
 });
 fetchCommunityData();
+
+// Fetch version hash from GitHub
+fetch('https://api.github.com/repos/kris10270/matcha-match/commits/main', { headers: { Accept: 'application/vnd.github.sha' } })
+  .then(r => r.text())
+  .then(sha => { document.getElementById('versionHash').textContent = 'v.' + sha.slice(0, 7); })
+  .catch(() => {});
 </script>
 </body>
 </html>
