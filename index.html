@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matcha Match - Rate Your Latte</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --matcha-50: #f0faf0;
+  --matcha-100: #dcf5dc;
+  --matcha-200: #b8e8b8;
+  --matcha-300: #7dd87d;
+  --matcha-400: #4aba4a;
+  --matcha-500: #2d8a2d;
+  --matcha-600: #1a6b1a;
+  --matcha-700: #155215;
+  --matcha-800: #0f3d0f;
+  --matcha-900: #0a2b0a;
+  --cream: #faf8f0;
+  --cream-dark: #f0ece0;
+  --warm-gray: #6b6560;
+  --text: #2a2520;
+  --text-light: #8a8580;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--cream);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Animated background */
+.bg-gradient {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(125, 216, 125, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(74, 186, 74, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(45, 138, 45, 0.04) 0%, transparent 50%);
+  z-index: 0;
+  animation: bgShift 20s ease-in-out infinite alternate;
+}
+
+@keyframes bgShift {
+  0% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.logo {
+  font-family: 'DM Serif Display', serif;
+  font-size: 3.2rem;
+  color: var(--matcha-700);
+  letter-spacing: -1px;
+  margin-bottom: 4px;
+  line-height: 1.1;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: var(--text-light);
+  font-weight: 300;
+  letter-spacing: 0.5px;
+}
+
+/* Info banner */
+.info-banner {
+  background: white;
+  border: 1px solid var(--cream-dark);
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 32px;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--warm-gray);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+
+.info-banner strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.info-banner a {
+  color: var(--matcha-600);
+  text-decoration: none;
+  border-bottom: 1px solid var(--matcha-200);
+  transition: border-color 0.2s;
+}
+
+.info-banner a:hover {
+  border-color: var(--matcha-500);
+}
+
+/* Drop zone */
+.drop-zone {
+  position: relative;
+  border: 2px dashed var(--matcha-300);
+  border-radius: 24px;
+  padding: 64px 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(10px);
+  margin-bottom: 32px;
+}
+
+.drop-zone:hover {
+  border-color: var(--matcha-500);
+  background: rgba(255,255,255,0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(45, 138, 45, 0.08);
+}
+
+.drop-zone.dragover {
+  border-color: var(--matcha-500);
+  background: var(--matcha-50);
+  transform: scale(1.02);
+}
+
+.drop-zone.has-image {
+  padding: 24px;
+  border-style: solid;
+  border-color: var(--matcha-200);
+}
+
+.drop-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.6;
+}
+
+.drop-text {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--matcha-700);
+  margin-bottom: 8px;
+}
+
+.drop-hint {
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+.preview-img {
+  max-width: 100%;
+  max-height: 400px;
+  border-radius: 16px;
+  object-fit: contain;
+  display: none;
+}
+
+.drop-zone.has-image .preview-img { display: block; margin: 0 auto; }
+.drop-zone.has-image .drop-icon,
+.drop-zone.has-image .drop-text,
+.drop-zone.has-image .drop-hint { display: none; }
+
+#fileInput { display: none; }
+
+/* Loading */
+.loading {
+  display: none;
+  text-align: center;
+  padding: 40px;
+}
+
+.loading.active { display: block; }
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid var(--matcha-100);
+  border-top: 3px solid var(--matcha-500);
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-text {
+  color: var(--text-light);
+  font-size: 0.95rem;
+}
+
+/* Results */
+.results {
+  display: none;
+  animation: fadeUp 0.6s ease;
+}
+
+.results.active { display: block; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.score-card {
+  background: white;
+  border-radius: 24px;
+  padding: 40px 32px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.score-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--matcha-300), var(--matcha-500), var(--matcha-700));
+}
+
+.score-tier-name {
+  font-family: 'DM Serif Display', serif;
+  font-size: 2.4rem;
+  margin-bottom: 4px;
+  animation: popIn 0.5s ease 0.2s both;
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.score-tier-subtitle {
+  font-size: 1rem;
+  color: var(--text-light);
+  margin-bottom: 28px;
+  animation: fadeUp 0.5s ease 0.3s both;
+}
+
+/* Score bar */
+.score-bar-container {
+  margin: 0 auto 28px;
+  max-width: 400px;
+  animation: fadeUp 0.5s ease 0.4s both;
+}
+
+.score-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-light);
+  margin-bottom: 8px;
+}
+
+.score-bar {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg,
+    #c4a882 0%,
+    #b5b87a 25%,
+    #8abf6a 50%,
+    #4aad4a 75%,
+    #1a7a1a 100%
+  );
+  position: relative;
+}
+
+.score-marker {
+  position: absolute;
+  top: -6px;
+  width: 24px;
+  height: 24px;
+  background: white;
+  border: 3px solid var(--matcha-700);
+  border-radius: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transition: left 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.score-value {
+  font-size: 3.6rem;
+  font-weight: 700;
+  color: var(--matcha-700);
+  line-height: 1;
+  margin-bottom: 4px;
+  animation: countUp 0.8s ease 0.3s both;
+}
+
+@keyframes countUp {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.score-out-of {
+  font-size: 1rem;
+  color: var(--text-light);
+  font-weight: 400;
+}
+
+/* Confidence */
+.confidence-note {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--cream-dark);
+  animation: fadeUp 0.5s ease 0.6s both;
+}
+
+/* Color analysis */
+.color-card {
+  background: white;
+  border-radius: 20px;
+  padding: 28px 24px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+  margin-bottom: 24px;
+  animation: fadeUp 0.5s ease 0.5s both;
+}
+
+.color-card h3 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.2rem;
+  margin-bottom: 16px;
+  color: var(--matcha-800);
+}
+
+.color-swatch-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.color-swatch {
+  flex: 1;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.color-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.color-stat {
+  padding: 12px;
+  background: var(--cream);
+  border-radius: 10px;
+}
+
+.color-stat-label {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.color-stat-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--matcha-700);
+}
+
+.has-tooltip {
+  position: relative;
+  cursor: help;
+}
+
+.info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--matcha-200);
+  color: var(--matcha-700);
+  font-size: 0.6rem;
+  font-weight: 700;
+  vertical-align: middle;
+  margin-left: 2px;
+}
+
+.color-stat-tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--matcha-800);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  width: 240px;
+  text-align: left;
+  font-weight: 400;
+  z-index: 10;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.color-stat-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--matcha-800);
+}
+
+.has-tooltip:hover .color-stat-tooltip,
+.has-tooltip:focus .color-stat-tooltip,
+.has-tooltip:active .color-stat-tooltip {
+  display: block;
+}
+
+/* Try again */
+.try-again {
+  text-align: center;
+  margin-top: 8px;
+  animation: fadeUp 0.5s ease 0.7s both;
+}
+
+.try-again button {
+  background: var(--matcha-600);
+  color: white;
+  border: none;
+  padding: 14px 36px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.try-again button:hover {
+  background: var(--matcha-700);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(45, 138, 45, 0.2);
+}
+
+/* How it works */
+.how-it-works {
+  background: white;
+  border-radius: 16px;
+  margin-top: 32px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  border: 1px solid var(--cream-dark);
+  overflow: hidden;
+}
+
+.how-it-works summary {
+  padding: 18px 24px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--matcha-700);
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.how-it-works summary::-webkit-details-marker { display: none; }
+
+.how-it-works summary::after {
+  content: '+';
+  font-size: 1.3rem;
+  font-weight: 300;
+  color: var(--text-light);
+  transition: transform 0.2s;
+}
+
+.how-it-works[open] summary::after {
+  content: '\2212';
+}
+
+.how-content {
+  padding: 0 24px 24px;
+  font-size: 0.88rem;
+  line-height: 1.75;
+  color: var(--warm-gray);
+}
+
+.how-content h4 {
+  color: var(--matcha-800);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 20px 0 6px;
+}
+
+.how-content h4:first-child {
+  margin-top: 4px;
+}
+
+.how-content p {
+  margin: 0 0 8px;
+}
+
+.how-content ul {
+  margin: 4px 0 8px;
+  padding-left: 20px;
+}
+
+.how-content li {
+  margin-bottom: 4px;
+}
+
+.how-content a {
+  color: var(--matcha-600);
+  text-decoration: none;
+  border-bottom: 1px solid var(--matcha-200);
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--cream-dark);
+  font-size: 0.8rem;
+  color: var(--text-light);
+  line-height: 1.8;
+}
+
+.footer a {
+  color: var(--matcha-600);
+  text-decoration: none;
+}
+
+/* Tier colors */
+.tier-1 { color: #9a7b5b; }
+.tier-2 { color: #8a8a50; }
+.tier-3 { color: #5a9a4a; }
+.tier-4 { color: #2d8a2d; }
+.tier-5 { color: #1a6b1a; }
+
+/* Responsive */
+@media (max-width: 480px) {
+  .container { padding: 24px 16px 60px; }
+  .logo { font-size: 2.4rem; }
+  .score-value { font-size: 2.8rem; }
+  .score-tier-name { font-size: 1.8rem; }
+  .drop-zone { padding: 48px 24px; }
+}
+</style>
+</head>
+<body>
+<div class="bg-gradient"></div>
+
+<div class="container">
+  <header class="header">
+    <h1 class="logo">Matcha Match</h1>
+    <p class="subtitle">How good is your matcha, really?</p>
+  </header>
+
+  <div class="info-banner">
+    <strong>Designed for oat &amp; soy milk matchas.</strong> Other milks or flavored lattes may give unexpected results.
+    For best results, shoot in <a href="https://support.apple.com/en-us/119916" target="_blank" rel="noopener">Apple ProRAW or RAW</a> to preserve color accuracy.
+  </div>
+
+  <div class="drop-zone" id="dropZone">
+    <div class="drop-icon">🍵</div>
+    <div class="drop-text">Drop your matcha photo here</div>
+    <div class="drop-hint">or click to browse &middot; JPEG, PNG, HEIF</div>
+    <img class="preview-img" id="previewImg" alt="Matcha preview">
+    <input type="file" id="fileInput" accept="image/*">
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">Analyzing your matcha...</div>
+  </div>
+
+  <div class="results" id="results">
+    <div class="score-card" id="scoreCard">
+      <div class="score-tier-name" id="tierName"></div>
+      <div class="score-tier-subtitle" id="tierSubtitle"></div>
+      <div class="score-value"><span id="scoreNum"></span><span class="score-out-of"> / 5</span></div>
+      <div class="score-bar-container">
+        <div class="score-bar-labels">
+          <span>Meh-tcha</span>
+          <span>Matcha Made in Heaven</span>
+        </div>
+        <div class="score-bar">
+          <div class="score-marker" id="scoreMarker"></div>
+        </div>
+      </div>
+      <div class="confidence-note" id="confidenceNote"></div>
+    </div>
+
+    <div class="color-card" id="colorCard">
+      <h3>What the Model Sees</h3>
+      <div class="color-swatch-row" id="swatchRow"></div>
+      <div class="color-stats" id="colorStats"></div>
+    </div>
+
+    <div class="try-again">
+      <button onclick="reset()">Score Another Matcha</button>
+    </div>
+  </div>
+
+  <details class="how-it-works">
+    <summary>How does this work?</summary>
+    <div class="how-content">
+      <p>Matcha Match uses a machine learning model that runs entirely in your browser. No images are uploaded anywhere.</p>
+
+      <h4>The data</h4>
+      <p>90 matcha latte photos from 33 different drinks were hand-rated on a 1&ndash;5 taste quality scale. Photos span a variety of cafes, cups, and lighting conditions.</p>
+
+      <h4>Feature extraction</h4>
+      <p>When you upload a photo, the model detects green-ish pixels in the center of the image (the matcha region) and extracts 41 color features:</p>
+      <ul>
+        <li><strong>Color ratios</strong> (RGB space): how much the green channel dominates over red and blue, as both absolute differences and ratios</li>
+        <li><strong>Perceptual color</strong> (Lab space): the a* axis measures green-vs-red intensity in a way that matches human perception, unlike raw RGB values</li>
+        <li><strong>Saturation &amp; vividness</strong> (HSV space): how rich the color is vs. grayish, and how far the color sits from the neutral gray line</li>
+        <li><strong>Pixel-level consistency</strong>: the standard deviation of color ratios across all detected pixels, capturing whether the matcha is a uniform color or patchy</li>
+        <li><strong>Brightness distribution</strong>: the histogram shape and percentiles of the green channel, capturing whether pixels cluster in a narrow or wide brightness band</li>
+        <li><strong>White-balanced variants</strong>: the above metrics recomputed after estimating and correcting for the scene's lighting color</li>
+      </ul>
+
+      <h4>The model</h4>
+      <p>A Support Vector Regression (SVR) model predicts a continuous 1.0&ndash;5.0 score. SVR works by mapping the 41 features into a high-dimensional space (via an RBF kernel) and fitting a regression surface that captures nonlinear relationships between color and quality. The full pipeline (feature scaling + SVR) is exported to <a href="https://onnxruntime.ai/">ONNX</a> format so it can run client-side in your browser.</p>
+
+      <h4>Accuracy</h4>
+      <p>On cross-validation: ~69% exact match and ~94% within one point of the human rating. The model is best at distinguishing good (4+) from average (3) matchas. Scores at the extremes (1 and 5) have fewer training examples.</p>
+
+      <h4>Limitations</h4>
+      <ul>
+        <li>Trained on oat &amp; soy milk matchas only</li>
+        <li>Lighting heavily affects detected color. <a href="https://support.apple.com/en-us/119916">RAW photos</a> give the most accurate results</li>
+        <li>Latte art, cup color, and background can influence the detected region</li>
+        <li>The model scores visual appearance, which correlates with but doesn't guarantee taste quality</li>
+      </ul>
+    </div>
+  </details>
+
+  <footer class="footer">
+    Built by <a href="https://claude.ai">Claude Opus 4.6</a> with scikit-learn + ONNX Runtime Web.
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.21.0/dist/ort.min.js"></script>
+<script>
+// ============================================================
+// MODEL DATA (embedded)
+// ============================================================
+const MODEL_B64 = `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`;
+
+// Score tier definitions
+const TIERS = [
+  { min: 0,   max: 1.5, name: "Meh-tcha",              subtitle: "Are we sure this isn't just hot milk?", cls: "tier-1" },
+  { min: 1.5, max: 2.5, name: "Matcha So-So",           subtitle: "Someone whispered 'matcha' near this cup", cls: "tier-2" },
+  { min: 2.5, max: 3.5, name: "Mid-cha",                 subtitle: "An almost respectable cup",          cls: "tier-3" },
+  { min: 3.5, max: 4.5, name: "Matcha Made My Day",     subtitle: "Now we're talking quality",          cls: "tier-4" },
+  { min: 4.5, max: 5.1, name: "Matcha Made in Heaven",  subtitle: "Peak green. Ceremonial vibes.",      cls: "tier-5" },
+];
+
+// ============================================================
+// ONNX SESSION
+// ============================================================
+let session = null;
+
+async function loadModel() {
+  const binaryString = atob(MODEL_B64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  session = await ort.InferenceSession.create(bytes.buffer);
+}
+
+// ============================================================
+// FEATURE EXTRACTION (mirrors Python exactly)
+// ============================================================
+function rgbToHsv(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  let h = 0;
+  if (d > 0) {
+    if (mx === r) h = (60 * ((g - b) / d) + 360) % 360;
+    else if (mx === g) h = (60 * ((b - r) / d) + 120) % 360;
+    else h = (60 * ((r - g) / d) + 240) % 360;
+  }
+  const s = mx > 0 ? d / mx : 0;
+  return [h, s, mx];
+}
+
+function rgbToLab(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  r = r > 0.04045 ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92;
+  g = g > 0.04045 ? Math.pow((g + 0.055) / 1.055, 2.4) : g / 12.92;
+  b = b > 0.04045 ? Math.pow((b + 0.055) / 1.055, 2.4) : b / 12.92;
+  let x = (r * 0.4124564 + g * 0.3575761 + b * 0.1804375) / 0.95047;
+  let y = r * 0.2126729 + g * 0.7151522 + b * 0.0721750;
+  let z = (r * 0.0193339 + g * 0.1191920 + b * 0.9503041) / 1.08883;
+  const f = t => t > 0.008856 ? Math.pow(t, 1/3) : 7.787 * t + 16/116;
+  return [116 * f(y) - 16, 500 * (f(x) - f(y)), 200 * (f(y) - f(z))];
+}
+
+function percentile(arr, p) {
+  const sorted = [...arr].sort((a, b) => a - b);
+  const idx = (p / 100) * (sorted.length - 1);
+  const lo = Math.floor(idx), hi = Math.ceil(idx);
+  return lo === hi ? sorted[lo] : sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+}
+
+function mean(arr) { return arr.reduce((a, b) => a + b, 0) / arr.length; }
+function std(arr) {
+  const m = mean(arr);
+  return Math.sqrt(arr.reduce((s, v) => s + (v - m) ** 2, 0) / arr.length);
+}
+function median(arr) { return percentile(arr, 50); }
+
+function extractFeatures(imageData, width, height) {
+  const pixels = imageData.data; // RGBA
+
+  // Resize logic: we work on 400x400, canvas already handles this
+  const mh = Math.floor(height * 0.12);
+  const mw = Math.floor(width * 0.12);
+  const ch = height - 2 * mh;
+  const cw = width - 2 * mw;
+
+  // Extract center region pixels
+  const centerR = [], centerG = [], centerB = [];
+  for (let y = mh; y < height - mh; y++) {
+    for (let x = mw; x < width - mw; x++) {
+      const i = (y * width + x) * 4;
+      centerR.push(pixels[i]);
+      centerG.push(pixels[i + 1]);
+      centerB.push(pixels[i + 2]);
+    }
+  }
+
+  // White balance from full image
+  const allBrightness = [];
+  const allR = [], allG = [], allB = [];
+  for (let i = 0; i < pixels.length; i += 4) {
+    const r = pixels[i], g = pixels[i+1], b = pixels[i+2];
+    allR.push(r); allG.push(g); allB.push(b);
+    allBrightness.push(r + g + b);
+  }
+  const p90 = percentile(allBrightness, 90);
+  const p95 = percentile(allBrightness, 95);
+  let wbR = 1, wbG = 1, wbB = 1;
+  const wbPixR = [], wbPixG = [], wbPixB = [];
+  for (let i = 0; i < allBrightness.length; i++) {
+    if (allBrightness[i] >= p90 && allBrightness[i] <= p95) {
+      wbPixR.push(allR[i]); wbPixG.push(allG[i]); wbPixB.push(allB[i]);
+    }
+  }
+  if (wbPixR.length >= 50) {
+    const wr = mean(wbPixR), wg = mean(wbPixG), wb = mean(wbPixB);
+    const avg = (wr + wg + wb) / 3;
+    if (Math.min(wr, wg, wb) >= 10) {
+      wbR = avg / wr; wbG = avg / wg; wbB = avg / wb;
+    }
+  }
+
+  // Detect matcha region
+  const matchaR = [], matchaG = [], matchaB = [];
+  const matchaWbR = [], matchaWbG = [], matchaWbB = [];
+  let greenCount = 0;
+  const totalCenter = centerR.length;
+
+  for (let i = 0; i < totalCenter; i++) {
+    const r = centerR[i], g = centerG[i], b = centerB[i];
+    const greenIsh = g > r * 0.85 && g > b * 0.95;
+    const notDark = (r + g + b) > 120;
+    const notBright = (r + g + b) < 720;
+    const hasColor = (Math.abs(r - g) + Math.abs(g - b) + Math.abs(r - b)) > 20;
+
+    if (greenIsh && notDark && notBright && hasColor) {
+      matchaR.push(r); matchaG.push(g); matchaB.push(b);
+      matchaWbR.push(Math.min(255, r * wbR));
+      matchaWbG.push(Math.min(255, g * wbG));
+      matchaWbB.push(Math.min(255, b * wbB));
+      greenCount++;
+    }
+  }
+
+  // Fallback: center circle
+  if (matchaR.length < 500) {
+    matchaR.length = 0; matchaG.length = 0; matchaB.length = 0;
+    matchaWbR.length = 0; matchaWbG.length = 0; matchaWbB.length = 0;
+    greenCount = 0;
+
+    const cx = cw / 2, cy = ch / 2, radius = Math.min(ch, cw) / 3;
+    const r2 = radius * radius;
+    let idx = 0;
+    for (let y = 0; y < ch; y++) {
+      for (let x = 0; x < cw; x++) {
+        if ((x - cx) ** 2 + (y - cy) ** 2 <= r2) {
+          const r = centerR[idx], g = centerG[idx], b = centerB[idx];
+          matchaR.push(r); matchaG.push(g); matchaB.push(b);
+          matchaWbR.push(Math.min(255, r * wbR));
+          matchaWbG.push(Math.min(255, g * wbG));
+          matchaWbB.push(Math.min(255, b * wbB));
+          greenCount++;
+        }
+        idx++;
+      }
+    }
+  }
+
+  const greenFraction = greenCount / totalCenter;
+
+  const rv = matchaR.map(Number), gv = matchaG.map(Number), bv = matchaB.map(Number);
+  const rvw = matchaWbR.map(Number), gvw = matchaWbG.map(Number), bvw = matchaWbB.map(Number);
+
+  const features = [];
+
+  // RGB stats (0-5)
+  features.push(mean(rv), mean(gv), mean(bv));
+  features.push(std(rv), std(gv), std(bv));
+
+  // Green dominance (6-9)
+  const gMinusR = gv.map((g, i) => g - rv[i]);
+  const gMinusB = gv.map((g, i) => g - bv[i]);
+  features.push(mean(gMinusR), mean(gMinusB));
+  features.push(mean(gv.map((g, i) => g / (rv[i] + 1))));
+  features.push(mean(gv.map((g, i) => g / (bv[i] + 1))));
+
+  // HSV per-pixel (10-12)
+  const hsvH = [], hsvS = [], hsvV = [];
+  for (let i = 0; i < rv.length; i++) {
+    const [h, s, v] = rgbToHsv(rv[i], gv[i], bv[i]);
+    hsvH.push(h); hsvS.push(s); hsvV.push(v);
+  }
+  features.push(mean(hsvH), mean(hsvS), mean(hsvV));
+
+  // Lab of mean (13-15)
+  const [L, a, bLab] = rgbToLab(mean(rv), mean(gv), mean(bv));
+  features.push(L, a, bLab);
+
+  // Green percentiles (16-20)
+  for (const p of [10, 25, 50, 75, 90]) features.push(percentile(gv, p));
+
+  // Green histogram 8 bins (21-28)
+  const hist = new Array(8).fill(0);
+  for (const g of gv) hist[Math.min(7, Math.floor(g / 32))]++;
+  const histSum = hist.reduce((a, b) => a + b, 0) || 1;
+  for (let i = 0; i < 8; i++) features.push(hist[i] / histSum);
+
+  // Saturation stats (29-31)
+  features.push(mean(hsvS), std(hsvS), median(hsvS));
+
+  // Uniformity (32-33)
+  features.push(std(gMinusR), std(gMinusB));
+
+  // Vividness (34-35)
+  const viv = rv.map((r, i) => {
+    const gray = (r + gv[i] + bv[i]) / 3;
+    return Math.sqrt((r - gray) ** 2 + (gv[i] - gray) ** 2 + (bv[i] - gray) ** 2);
+  });
+  features.push(mean(viv), std(viv));
+
+  // WB features (36-39)
+  features.push(mean(gvw.map((g, i) => g - rvw[i])));
+  features.push(mean(gvw.map((g, i) => g - bvw[i])));
+  const wbSat = rvw.map((r, i) => {
+    const mx = Math.max(r, gvw[i], bvw[i]);
+    const mn = Math.min(r, gvw[i], bvw[i]);
+    return mx > 0 ? (mx - mn) / mx : 0;
+  });
+  features.push(mean(wbSat));
+  const [, aWb] = rgbToLab(mean(rvw), mean(gvw), mean(bvw));
+  features.push(aWb);
+
+  // Green fraction (40)
+  features.push(greenFraction);
+
+  // For display: pick only the most green-dominant pixels for the color swatch
+  const displayR = [], displayG = [], displayB = [];
+  for (let i = 0; i < rv.length; i++) {
+    if (gv[i] > rv[i] && gv[i] > bv[i] && gv[i] > 80) {
+      displayR.push(rv[i]); displayG.push(gv[i]); displayB.push(bv[i]);
+    }
+  }
+  const dR = displayR.length > 10 ? displayR : rv;
+  const dG = displayG.length > 10 ? displayG : gv;
+  const dB = displayB.length > 10 ? displayB : bv;
+
+  // Compute display Lab a* from the display color (not the model features)
+  const [, displayLabA] = rgbToLab(mean(dR), mean(dG), mean(dB));
+
+  return { features, matchaColor: [Math.round(mean(dR)), Math.round(mean(dG)), Math.round(mean(dB))],
+           saturation: mean(hsvS), labA: displayLabA };
+}
+
+// ============================================================
+// INFERENCE
+// ============================================================
+async function predict(features) {
+  if (!session) await loadModel();
+
+  // No manual scaling needed — the ONNX pipeline includes the StandardScaler
+  const tensor = new ort.Tensor('float32', new Float32Array(features), [1, 41]);
+  const results = await session.run({ float_input: tensor });
+  const output = results[Object.keys(results)[0]];
+  let score = output.data[0];
+  score = Math.max(1, Math.min(5, score));
+  return score;
+}
+
+// ============================================================
+// UI
+// ============================================================
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const previewImg = document.getElementById('previewImg');
+const loading = document.getElementById('loading');
+const resultsDiv = document.getElementById('results');
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => { if (e.target.files.length) handleFile(e.target.files[0]); });
+
+function handleFile(file) {
+  if (!file.type.startsWith('image/')) return;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    previewImg.src = e.target.result;
+    dropZone.classList.add('has-image');
+    processImage(e.target.result);
+  };
+  reader.readAsDataURL(file);
+}
+
+async function processImage(dataUrl) {
+  loading.classList.add('active');
+  resultsDiv.classList.remove('active');
+
+  // Load image to canvas at 400x400
+  const img = new Image();
+  img.onload = async () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 400;
+    canvas.height = 400;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, 400, 400);
+    const imageData = ctx.getImageData(0, 0, 400, 400);
+
+    try {
+      const { features, matchaColor, saturation, labA } = extractFeatures(imageData, 400, 400);
+      const score = await predict(features);
+      showResults(score, matchaColor, saturation, labA);
+    } catch (err) {
+      console.error('Prediction error:', err);
+      alert('Error analyzing image. Please try another photo.');
+    }
+
+    loading.classList.remove('active');
+  };
+  img.src = dataUrl;
+}
+
+function showResults(score, matchaColor, saturation, labA) {
+  const roundedScore = Math.round(score * 10) / 10;
+  const tier = TIERS.find(t => score >= t.min && score < t.max) || TIERS[TIERS.length - 1];
+
+  // Score number with animation
+  const scoreEl = document.getElementById('scoreNum');
+  animateNumber(scoreEl, 0, roundedScore, 800);
+
+  // Tier name
+  const tierNameEl = document.getElementById('tierName');
+  tierNameEl.textContent = tier.name;
+  tierNameEl.className = 'score-tier-name ' + tier.cls;
+
+  document.getElementById('tierSubtitle').textContent = tier.subtitle;
+
+  // Score bar marker
+  const pct = ((score - 1) / 4) * 100;
+  const marker = document.getElementById('scoreMarker');
+  marker.style.left = '0%';
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => { marker.style.left = pct + '%'; });
+  });
+
+  // Confidence note
+  document.getElementById('confidenceNote').textContent =
+    `Model accuracy: ~69% exact match, ~94% within one point of human rating.`;
+
+  // Color analysis
+  const [r, g, b] = matchaColor;
+  const swatchRow = document.getElementById('swatchRow');
+  swatchRow.innerHTML = `
+    <div class="color-swatch" style="background: rgb(${r},${g},${b})">Your matcha</div>
+    <div class="color-swatch" style="background: rgb(100,165,60)">Ideal 5/5</div>
+    <div class="color-swatch" style="background: rgb(170,175,110)">Typical 1/5</div>
+  `;
+
+  const statsEl = document.getElementById('colorStats');
+  statsEl.innerHTML = `
+    <div class="color-stat">
+      <div class="color-stat-label">Green Saturation</div>
+      <div class="color-stat-value">${(saturation * 100).toFixed(0)}%</div>
+    </div>
+    <div class="color-stat">
+      <div class="color-stat-label">Green Intensity</div>
+      <div class="color-stat-value">${labA < -15 ? 'Very Green' : labA < -8 ? 'Green' : labA < -3 ? 'Mild' : 'Pale'}</div>
+    </div>
+    <div class="color-stat">
+      <div class="color-stat-label">Avg Color</div>
+      <div class="color-stat-value">R${r} G${g} B${b}</div>
+    </div>
+    <div class="color-stat has-tooltip" tabindex="0">
+      <div class="color-stat-tooltip">Lab a* measures the green–red axis in perceptual color space. More negative = more green. Ceremonial-grade matcha typically scores below −10.</div>
+      <div class="color-stat-label">Lab a* <span class="info-icon">?</span></div>
+      <div class="color-stat-value">${labA.toFixed(1)}</div>
+    </div>
+  `;
+
+  resultsDiv.classList.add('active');
+}
+
+function animateNumber(el, from, to, duration) {
+  const start = performance.now();
+  function update(now) {
+    const t = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const val = from + (to - from) * eased;
+    el.textContent = val.toFixed(1);
+    if (t < 1) requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+
+function reset() {
+  dropZone.classList.remove('has-image');
+  previewImg.src = '';
+  fileInput.value = '';
+  resultsDiv.classList.remove('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Configure ONNX Runtime
+ort.env.wasm.numThreads = 1;
+
+// Preload model
+loadModel().catch(err => {
+  console.error('Model load error:', err);
+});
+</script>
+</body>
+</html>
