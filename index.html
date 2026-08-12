@@ -390,12 +390,6 @@ body {
   color: var(--matcha-700);
 }
 
-.color-stat-sub {
-  font-size: 0.72rem;
-  font-weight: 400;
-  color: var(--text-light);
-}
-
 .has-tooltip {
   position: relative;
   cursor: help;
@@ -728,69 +722,6 @@ body {
   border: 2px solid var(--matcha-200);
 }
 
-/* Sanity check panel */
-.sanity-panel {
-  background: white;
-  border-radius: 20px;
-  padding: 24px 20px;
-  border: 1px solid var(--cream-dark);
-  margin-bottom: 24px;
-  box-shadow: 0 2px 16px rgba(26, 107, 26, 0.06);
-}
-.sanity-panel h3 {
-  font-family: 'DM Serif Display', serif;
-  font-size: 1.2rem;
-  color: var(--matcha-700);
-  margin-bottom: 6px;
-}
-.sanity-panel .sanity-sub {
-  font-size: 0.82rem;
-  color: var(--text-light);
-  margin-bottom: 16px;
-}
-.sanity-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.82rem;
-}
-.sanity-table th, .sanity-table td {
-  padding: 7px 6px;
-  text-align: left;
-  border-bottom: 1px solid var(--cream-dark);
-}
-.sanity-table th {
-  font-weight: 600;
-  color: var(--text-light);
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.sanity-table .num { text-align: right; font-variant-numeric: tabular-nums; }
-.sanity-table .swatch-cell { width: 20px; }
-.sanity-swatch {
-  display: inline-block;
-  width: 18px; height: 18px;
-  border-radius: 4px;
-  border: 1px solid rgba(0,0,0,0.1);
-}
-.sanity-table .score-good { color: var(--matcha-600); font-weight: 700; }
-.sanity-table .score-bad { color: #b5651d; font-weight: 700; }
-.sanity-run-btn {
-  background: var(--matcha-50);
-  border: 1px solid var(--matcha-200);
-  color: var(--matcha-700);
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.sanity-run-btn:hover {
-  background: var(--matcha-100);
-  border-color: var(--matcha-300);
-}
-
 /* Responsive */
 @media (max-width: 480px) {
   .container { padding: 24px 16px 60px; }
@@ -853,7 +784,7 @@ body {
     </div>
 
     <div class="color-card" id="colorCard">
-      <h3>Color Breakdown</h3>
+      <h3>What the Model Sees</h3>
       <div class="color-swatch-row" id="swatchRow"></div>
       <div class="color-stats" id="colorStats"></div>
     </div>
@@ -886,25 +817,21 @@ body {
       <p>90 matcha latte photos from 33 different drinks were hand-rated on a 1&ndash;5 taste quality scale. Photos span a variety of cafes, cups, and lighting conditions.</p>
 
       <h4>Feature extraction</h4>
-      <p>The headline score now comes from <strong>6 perceptual color features</strong>, computed in CIE Lab and HSV space from the detected matcha region, and scored transparently (no black box):</p>
+      <p>When you upload a photo, the model detects green-ish pixels in the center of the image (the matcha region) and extracts 41 color features:</p>
       <ul>
-        <li><strong>Green dominance</strong> mean(G&minus;R): is the color actually green-dominant? (ideal matcha &asymp; 65, watery/cream matcha &asymp; 5) &mdash; the single most discriminating feature, which the old model had buried among 41 proxies.</li>
-        <li><strong>Lab a\*</strong>: perceptual green&ndash;red axis. More negative = greener. Ceremonial grade typically sits below &minus;10.</li>
-        <li><strong>Lab chroma</strong> &radic;(a\*&sup2;+b\*&sup2;): perceptual vividness. Vivid green matcha lands 45&ndash;70; muddy/gray 10&ndash;20. (The old "vividness" was measured in RGB, which is not perceptually uniform.)</li>
-        <li><strong>Hue distance</strong> to the ideal green hue, computed as a <em>circular</em> mean &mdash; the old model averaged hue arithmetically, which is invalid for a circular quantity and a source of randomness.</li>
-        <li><strong>HSV saturation</strong>: desaturated (watery/creamy) colors score low regardless of hue.</li>
-        <li><strong>&Delta;E to ideal</strong> (chromaticity distance in a\*b\* to the reference ceremonial-green color): a one-sided penalty for being far from the known-good color.</li>
+        <li><strong>Color ratios</strong> (RGB space): how much the green channel dominates over red and blue, as both absolute differences and ratios</li>
+        <li><strong>Perceptual color</strong> (Lab space): the a* axis measures green-vs-red intensity in a way that matches human perception, unlike raw RGB values</li>
+        <li><strong>Saturation &amp; vividness</strong> (HSV space): how rich the color is vs. grayish, and how far the color sits from the neutral gray line</li>
+        <li><strong>Pixel-level consistency</strong>: the standard deviation of color ratios across all detected pixels, capturing whether the matcha is a uniform color or patchy</li>
+        <li><strong>Brightness distribution</strong>: the histogram shape and percentiles of the green channel, capturing whether pixels cluster in a narrow or wide brightness band</li>
+        <li><strong>White-balanced variants</strong>: the above metrics recomputed after estimating and correcting for the scene's lighting color</li>
       </ul>
-      <p>White balance is now estimated from <em>low-saturation, mid-brightness</em> pixels (neutral surfaces reflecting the illuminant), not the brightest pixels (foam), so the score no longer swings with cup framing.</p>
 
-      <h4>The legacy model (still shown)</h4>
-      <p>For comparison we also keep the original 41-feature Support Vector Regression (RBF kernel, trained on 90 photos) running, and display it as a secondary "legacy ML estimate". It was the source of the unreliability: ~90 training examples for 41 largely-redundant features (&sim;2 per feature), with an arithmetic hue average and a foam-biased white balance. It remains available so the two can be compared side by side (see the &ldquo;Sanity check&rdquo; panel below).</p>
-
-      <h4>Retraining on the new features</h4>
-      <p>The 14 perceptual features are exposed for an external SVR retrain &mdash; see <code>train_matcha.py</code> in the repo. It mirrors the JS extractor exactly, trains a scaled RBF SVR, and emits a new ONNX blob plus the scaler constants to paste back into <code>index.html</code>. The transparent scorer above is a sound default until that retrain is run.</p>
+      <h4>The model</h4>
+      <p>A Support Vector Regression (SVR) model predicts a continuous 1.0&ndash;5.0 score. SVR works by mapping the 41 features into a high-dimensional space (via an RBF kernel) and fitting a regression surface that captures nonlinear relationships between color and quality. The full pipeline (feature scaling + SVR) is exported to <a href="https://onnxruntime.ai/">ONNX</a> format so it can run client-side in your browser.</p>
 
       <h4>Accuracy</h4>
-      <p>The legacy model's cross-validation: ~69% exact match and ~94% within one point of the human rating. The perceptual scorer is calibrated against the in-app reference swatches (ideal &rarr; 5, washed-out &rarr; 1) rather than a held-out set; run the sanity check below to inspect both.</p>
+      <p>On cross-validation: ~69% exact match and ~94% within one point of the human rating. The model is best at distinguishing good (4+) from average (3) matchas. Scores at the extremes (1 and 5) have fewer training examples.</p>
 
       <h4>Limitations</h4>
       <ul>
@@ -913,20 +840,6 @@ body {
         <li>Latte art, cup color, and background can influence the detected region</li>
         <li>The model scores visual appearance, which correlates with but doesn't guarantee taste quality</li>
       </ul>
-    </div>
-  </details>
-
-  <details class="sanity-panel" id="sanityPanel">
-    <summary>Sanity check — synthetic patches</summary>
-    <div style="padding:16px 4px 4px;">
-      <p class="sanity-sub">Uniform-color patches scored by both the new perceptual scorer and the legacy 90-photo SVR. The perceptual column should track the "expected" column; large gaps in the legacy column are exactly the "RNG" behaviour that prompted the rewrite. <strong>Run it after the model finishes loading.</strong></p>
-      <button class="sanity-run-btn" id="sanityRunBtn">Run sanity check</button>
-      <table class="sanity-table" style="margin-top:14px;">
-        <thead>
-          <tr><th></th><th>Patch</th><th>Exp.</th><th class="num">Perceptual</th><th class="num">Legacy ML</th><th class="num">G−R</th></tr>
-        </thead>
-        <tbody id="sanityBody"></tbody>
-      </table>
     </div>
   </details>
 
@@ -1105,51 +1018,6 @@ function std(arr) {
   return Math.sqrt(arr.reduce((s, v) => s + (v - m) ** 2, 0) / arr.length);
 }
 function median(arr) { return percentile(arr, 50); }
-function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
-
-// Circular mean of hue values (degrees). The legacy code averaged hue arithmetically,
-// which is invalid for a circular quantity — pixels near the 0/360° wraparound corrupt
-// the mean. This is the principled version used by both pipelines now.
-function circularHueMean(hues) {
-  if (!hues.length) return 0;
-  let sx = 0, sy = 0;
-  for (const h of hues) { const r = h * Math.PI / 180; sx += Math.cos(r); sy += Math.sin(r); }
-  let d = Math.atan2(sy, sx) * 180 / Math.PI;
-  return d < 0 ? d + 360 : d;
-}
-function circularHueDistance(h1, h2) {
-  let d = Math.abs(h1 - h2) % 360;
-  return d > 180 ? 360 - d : d;
-}
-
-// Principled white-balance estimate. The legacy estimator took the p90–p95 *brightest*
-// pixels as a neutral reference — but in a latte photo those are usually white foam /
-// specular highlights, which biases the gains and swings WB (and hence 4 features)
-// with cup framing. Here we take the *low-saturation, mid-brightness* pixels, which are
-// neutral surfaces (cup rim, napkin, foam edges) reflecting the scene illuminant — a
-// far more stable reference. Falls back to identity (no WB) if too few are found.
-function estimateWhiteBalance(pixels) {
-  const n = pixels.length / 4;
-  const bright = new Array(n);
-  for (let i = 0, j = 0; i < pixels.length; i += 4, j++) {
-    bright[j] = pixels[i] + pixels[i + 1] + pixels[i + 2];
-  }
-  const p20 = percentile(bright, 20);
-  const p80 = percentile(bright, 80);
-  const sR = [], sG = [], sB = [];
-  for (let i = 0; i < pixels.length; i += 4) {
-    const r = pixels[i], g = pixels[i + 1], b = pixels[i + 2];
-    const [, s] = rgbToHsv(r, g, b);
-    const br = r + g + b;
-    if (s < 0.25 && br >= p20 && br <= p80) { sR.push(r); sG.push(g); sB.push(b); }
-  }
-  if (sR.length >= 50) {
-    const mr = mean(sR), mg = mean(sG), mb = mean(sB);
-    const avg = (mr + mg + mb) / 3;
-    if (Math.min(mr, mg, mb) >= 10 && avg > 0) return [avg / mr, avg / mg, avg / mb];
-  }
-  return [1, 1, 1];
-}
 
 function extractFeatures(imageData, width, height) {
   const pixels = imageData.data; // RGBA
@@ -1171,8 +1039,30 @@ function extractFeatures(imageData, width, height) {
     }
   }
 
-  // White balance — principled neutral-reference estimator (see estimateWhiteBalance).
-  const [wbR, wbG, wbB] = estimateWhiteBalance(pixels);
+  // White balance from full image
+  const allBrightness = [];
+  const allR = [], allG = [], allB = [];
+  for (let i = 0; i < pixels.length; i += 4) {
+    const r = pixels[i], g = pixels[i+1], b = pixels[i+2];
+    allR.push(r); allG.push(g); allB.push(b);
+    allBrightness.push(r + g + b);
+  }
+  const p90 = percentile(allBrightness, 90);
+  const p95 = percentile(allBrightness, 95);
+  let wbR = 1, wbG = 1, wbB = 1;
+  const wbPixR = [], wbPixG = [], wbPixB = [];
+  for (let i = 0; i < allBrightness.length; i++) {
+    if (allBrightness[i] >= p90 && allBrightness[i] <= p95) {
+      wbPixR.push(allR[i]); wbPixG.push(allG[i]); wbPixB.push(allB[i]);
+    }
+  }
+  if (wbPixR.length >= 50) {
+    const wr = mean(wbPixR), wg = mean(wbPixG), wb = mean(wbPixB);
+    const avg = (wr + wg + wb) / 3;
+    if (Math.min(wr, wg, wb) >= 10) {
+      wbR = avg / wr; wbG = avg / wg; wbB = avg / wb;
+    }
+  }
 
   // Detect matcha region
   const matchaR = [], matchaG = [], matchaB = [];
@@ -1244,7 +1134,7 @@ function extractFeatures(imageData, width, height) {
     const [h, s, v] = rgbToHsv(rv[i], gv[i], bv[i]);
     hsvH.push(h); hsvS.push(s); hsvV.push(v);
   }
-  features.push(circularHueMean(hsvH), mean(hsvS), mean(hsvV));
+  features.push(mean(hsvH), mean(hsvS), mean(hsvV));
 
   // Lab of mean (13-15)
   const [L, a, bLab] = rgbToLab(mean(rv), mean(gv), mean(bv));
@@ -1303,137 +1193,6 @@ function extractFeatures(imageData, width, height) {
 
   return { features, matchaColor: [Math.round(mean(dR)), Math.round(mean(dG)), Math.round(mean(dB))],
            saturation: mean(hsvS), labA: displayLabA };
-}
-
-// ============================================================
-// PERCEPTUAL COLOR SCORER ("the right features")
-// ============================================================
-// Whereas extractFeatures() feeds the legacy 41-feature SVR (many redundant proxies
-// for "how green"), this module computes a small set of *colorimetrically meaningful*
-// features directly aligned with what "good matcha color" actually is, and scores
-// them transparently. This is the principled replacement path; the legacy SVR now
-// only provides a secondary "ML estimate" for comparison.
-const IDEAL_RGB = [100, 165, 60];                 // the in-app "Ideal 5/5" swatch
-const IDEAL_LAB = rgbToLab(IDEAL_RGB[0], IDEAL_RGB[1], IDEAL_RGB[2]);
-const IDEAL_HUE = rgbToHsv(IDEAL_RGB[0], IDEAL_RGB[1], IDEAL_RGB[2])[0];
-
-// 14 well-chosen features (order matters — must mirror train_matcha.py exactly):
-//  0  Lab L* (mean)            7  ΔE full Lab to ideal
-//  1  Lab a* (mean)            8  circular hue distance to ideal (degrees)
-//  2  Lab b* (mean)            9  HSV S mean
-//  3  Lab a* (std)            10  HSV S std
-//  4  chroma (of mean color)  11  green fraction (segmentation confidence)
-//  5  chroma (per-pixel std)  12  green dominance mean(G−R)
-//  6  ΔE chroma (a*b*)       13  green dominance std(G−R)
-function extractPerceptualFeatures(imageData, width, height) {
-  const pixels = imageData.data;
-  const mh = Math.floor(height * 0.12), mw = Math.floor(width * 0.12);
-
-  const [wbR, wbG, wbB] = estimateWhiteBalance(pixels);
-
-  // Segment matcha pixels (same detector as the legacy pipeline).
-  const mr = [], mg = [], mb = [], mwr = [], mwg = [], mwb = [];
-  let total = 0;
-  for (let y = mh; y < height - mh; y++) {
-    for (let x = mw; x < width - mw; x++) {
-      const i = (y * width + x) * 4;
-      const r = pixels[i], g = pixels[i + 1], b = pixels[i + 2];
-      total++;
-      const greenIsh = g > r * 0.85 && g > b * 0.95;
-      const notDark = (r + g + b) > 120;
-      const notBright = (r + g + b) < 720;
-      const hasColor = (Math.abs(r - g) + Math.abs(g - b) + Math.abs(r - b)) > 20;
-      if (greenIsh && notDark && notBright && hasColor) {
-        mr.push(r); mg.push(g); mb.push(b);
-        mwr.push(Math.min(255, r * wbR)); mwg.push(Math.min(255, g * wbG)); mwb.push(Math.min(255, b * wbB));
-      }
-    }
-  }
-  // Fallback: centered circle (no green filter) — same rule as the legacy pipeline.
-  if (mr.length < 500) {
-    mr.length = mg.length = mb.length = mwr.length = mwg.length = mwb.length = 0;
-    const ch = height - 2 * mh, cw = width - 2 * mw;
-    const cx = cw / 2, cy = ch / 2, rad = Math.min(ch, cw) / 3, r2 = rad * rad;
-    for (let y = 0; y < ch; y++) {
-      for (let x = 0; x < cw; x++) {
-        if ((x - cx) ** 2 + (y - cy) ** 2 <= r2) {
-          const idx = ((y + mh) * width + (x + mw)) * 4;
-          const r = pixels[idx], g = pixels[idx + 1], b = pixels[idx + 2];
-          mr.push(r); mg.push(g); mb.push(b);
-          mwr.push(Math.min(255, r * wbR)); mwg.push(Math.min(255, g * wbG)); mwb.push(Math.min(255, b * wbB));
-        }
-      }
-    }
-  }
-  const greenFraction = total > 0 ? mr.length / total : 0;
-
-  // Per-pixel Lab + HSV distributions.
-  const labL = [], labA = [], labB = [], chroma = [], hues = [], sats = [];
-  for (let i = 0; i < mr.length; i++) {
-    const [L, a, bL] = rgbToLab(mr[i], mg[i], mb[i]);
-    labL.push(L); labA.push(a); labB.push(bL); chroma.push(Math.sqrt(a * a + bL * bL));
-    const [h, s] = rgbToHsv(mr[i], mg[i], mb[i]);
-    hues.push(h); sats.push(s);
-  }
-
-  // Single-point descriptors from the mean color (stable, lighting-robust).
-  const [Lmean, amean, bmean] = mr.length
-    ? rgbToLab(mean(mr), mean(mg), mean(mb)) : [IDEAL_LAB[0], IDEAL_LAB[1], IDEAL_LAB[2]];
-  const chromaMean = Math.sqrt(amean * amean + bmean * bmean);
-
-  // Distances to the known-good reference color.
-  const dE_ab = Math.sqrt((amean - IDEAL_LAB[1]) ** 2 + (bmean - IDEAL_LAB[2]) ** 2);
-  const dE_Lab = Math.sqrt((Lmean - IDEAL_LAB[0]) ** 2 + (amean - IDEAL_LAB[1]) ** 2 + (bmean - IDEAL_LAB[2]) ** 2);
-
-  // Circular hue (the fix for the legacy arithmetic-hue bug).
-  const hueMean = hues.length ? circularHueMean(hues) : IDEAL_HUE;
-  const hueDist = circularHueDistance(hueMean, IDEAL_HUE);
-
-  // Green dominance: how much G exceeds R per pixel. THE core "is it actually green"
-  // signal — ideal swatch G−R ≈ 65; the washed-out "1/5" swatch G−R ≈ 5. Buried among
-  // 41 features in the legacy model; promoted to a first-class feature here.
-  const grArr = mr.map((r, i) => mg[i] - r);
-  const greenDomMean = grArr.length ? mean(grArr) : 0;
-  const greenDomStd = grArr.length ? std(grArr) : 0;
-
-  const features = [
-    Lmean, amean, bmean, std(labA),
-    chromaMean, std(chroma),
-    dE_ab, dE_Lab,
-    hueDist, sats.length ? mean(sats) : 0, sats.length ? std(sats) : 0,
-    greenFraction, greenDomMean, greenDomStd,
-  ];
-
-  return { features, Lmean, amean, bmean, chromaMean, dE_ab, dE_Lab, hueDist,
-           hueMean, satMean: sats.length ? mean(sats) : 0, greenFraction, greenDomMean };
-}
-
-// Transparent, colorimetrically-grounded 1–5 score. Every term is a simple
-// piecewise-linear map into [1,5] so the behaviour is auditable, not a black box.
-function perceptualScore(p) {
-  const sDom    = clamp(1 + (p.greenDomMean / 70) * 4, 1, 5);                       // green dominance
-  const sA      = clamp(1 + ((-p.amean) - 3) / (35 - 3) * 4, 1, 5);                 // Lab a* greenness
-  const sChroma = clamp(1 + ((p.chromaMean - 15) / (55 - 15)) * 4, 1, 5);          // perceptual vividness
-  const sHue    = clamp(5 - ((p.hueDist - 10) / (45 - 10)) * 4, 1, 5);              // hue on target
-  const sSat    = clamp(1 + ((p.satMean - 0.30) / (0.62 - 0.30)) * 4, 1, 5);       // saturation
-  const sDE     = clamp(5 - Math.max(0, p.dE_ab - 20) / 30 * 4, 1, 5);              // one-sided ΔE penalty
-
-  let raw = sDom * 0.30 + sA * 0.18 + sChroma * 0.14 + sHue * 0.14 + sSat * 0.14 + sDE * 0.10;
-
-  // Segmentation-confidence gate: if almost nothing classified as matcha, we are
-  // unsure — pull toward the middle instead of trusting any single sub-score.
-  if (p.greenFraction < 0.25) {
-    const w = (0.25 - p.greenFraction) / 0.25;
-    raw = raw * (1 - w * 0.3) + 3 * (w * 0.3);
-  }
-
-  // Shaping curve: expands the low end so middling-bad greens fall toward 1 while
-  // good greens stay near 5 (makes the score feel as discriminating as a human 1–5).
-  const shaped = 1 + Math.pow(Math.max(0, raw - 1) / 4, 1.5) * 4;
-  return {
-    score: clamp(shaped, 1, 5),
-    parts: { sDom, sA, sChroma, sHue, sSat, sDE },
-  };
 }
 
 // ============================================================
@@ -1498,15 +1257,11 @@ async function processImage(dataUrl) {
 
     try {
       const { features, matchaColor, saturation, labA } = extractFeatures(imageData, 400, 400);
-      const perceptual = extractPerceptualFeatures(imageData, 400, 400);
-      const { score: perceptualScoreVal, parts: perceptualParts } = perceptualScore(perceptual);
       currentFeatures = features.slice();
       hasSubmittedRating = false;
-      let mlScore = null;
-      try { mlScore = await predict(features); } catch (e) { console.warn('Legacy ML model unavailable:', e); }
+      const score = await predict(features);
       const communityScore = knnPredict(features, 5);
-      showResults(perceptualScoreVal, perceptualParts, perceptual, mlScore,
-                  matchaColor, saturation, labA, communityScore);
+      showResults(score, matchaColor, saturation, labA, communityScore);
     } catch (err) {
       console.error('Prediction error:', err);
       alert('Error analyzing image. Please try another photo.');
@@ -1517,11 +1272,11 @@ async function processImage(dataUrl) {
   img.src = dataUrl;
 }
 
-function showResults(score, parts, perceptual, mlScore, matchaColor, saturation, labA, communityScore) {
+function showResults(score, matchaColor, saturation, labA, communityScore) {
   const roundedScore = Math.round(score * 10) / 10;
   const tier = TIERS.find(t => score >= t.min && score < t.max) || TIERS[TIERS.length - 1];
 
-  // Score number with animation (headline = perceptual/colorimetric score)
+  // Score number with animation
   const scoreEl = document.getElementById('scoreNum');
   animateNumber(scoreEl, 0, roundedScore, 800);
 
@@ -1540,19 +1295,9 @@ function showResults(score, parts, perceptual, mlScore, matchaColor, saturation,
     requestAnimationFrame(() => { marker.style.left = pct + '%'; });
   });
 
-  // Headline is now a transparent, colorimetric score (not the 90-photo SVR).
-  const mlLine = document.getElementById('confidenceNote');
-  if (mlScore !== null && mlScore !== undefined && !isNaN(mlScore)) {
-    const roundedMl = Math.round(mlScore * 10) / 10;
-    const diff = Math.abs(roundedMl - roundedScore);
-    const note = diff > 0.75 ? ' (legacy model disagrees — perceptual score is preferred)' : '';
-    mlLine.innerHTML =
-      `Color score from 6 perceptual features (green dominance, Lab a*, chroma, hue, saturation, ΔE to ideal). ` +
-      `Legacy 90-photo SVR estimate: <strong>${roundedMl.toFixed(1)} / 5</strong>${note}.`;
-  } else {
-    mlLine.textContent =
-      'Color score from 6 perceptual features (green dominance, Lab a*, chroma, hue, saturation, ΔE to ideal).';
-  }
+  // Confidence note
+  document.getElementById('confidenceNote').textContent =
+    `Model accuracy: ~69% exact match, ~94% within one point of human rating.`;
 
   // Color analysis
   const [r, g, b] = matchaColor;
@@ -1563,42 +1308,24 @@ function showResults(score, parts, perceptual, mlScore, matchaColor, saturation,
     <div class="color-swatch" style="background: rgb(170,175,110)">Typical 1/5</div>
   `;
 
-  // Perceptual breakdown — the "right features", made visible.
-  const greenDom = perceptual.greenDomMean;
-  const greenDomPct = clamp(greenDom / 70, 0, 1) * 100;
   const statsEl = document.getElementById('colorStats');
   statsEl.innerHTML = `
-    <div class="color-stat has-tooltip" tabindex="0">
-      <div class="color-stat-tooltip">Green dominance = mean(G−R) across detected matcha pixels. The single most discriminating feature: ideal matcha sits near 65, washed-out matcha near 5.</div>
-      <div class="color-stat-label">Green Dominance <span class="info-icon">?</span></div>
-      <div class="color-stat-value">${greenDom.toFixed(0)} <span class="color-stat-sub">${greenDomPct.toFixed(0)}% of ideal</span></div>
-    </div>
-    <div class="color-stat has-tooltip" tabindex="0">
-      <div class="color-stat-tooltip">Lab a* measures the green–red axis in perceptual color space. More negative = more green. Ceremonial-grade matcha typically scores below −10.</div>
-      <div class="color-stat-label">Lab a* <span class="info-icon">?</span></div>
-      <div class="color-stat-value">${perceptual.amean.toFixed(1)}</div>
-    </div>
-    <div class="color-stat has-tooltip" tabindex="0">
-      <div class="color-stat-tooltip">Lab chroma = √(a*² + b*²) — perceptual vividness. Vivid green matcha lands 45–70; muddy/gray 10–20.</div>
-      <div class="color-stat-label">Chroma <span class="info-icon">?</span></div>
-      <div class="color-stat-value">${perceptual.chromaMean.toFixed(1)}</div>
-    </div>
-    <div class="color-stat has-tooltip" tabindex="0">
-      <div class="color-stat-tooltip">ΔE to ideal = perceptual distance (a*b* only) to the reference ceremonial-green color. 0 = identical; 30+ = clearly different.</div>
-      <div class="color-stat-label">ΔE to Ideal <span class="info-icon">?</span></div>
-      <div class="color-stat-value">${perceptual.dE_ab.toFixed(1)}</div>
+    <div class="color-stat">
+      <div class="color-stat-label">Green Saturation</div>
+      <div class="color-stat-value">${(saturation * 100).toFixed(0)}%</div>
     </div>
     <div class="color-stat">
-      <div class="color-stat-label">Hue vs Ideal</div>
-      <div class="color-stat-value">${perceptual.hueDist.toFixed(0)}° off</div>
-    </div>
-    <div class="color-stat">
-      <div class="color-stat-label">Saturation</div>
-      <div class="color-stat-value">${(perceptual.satMean * 100).toFixed(0)}%</div>
+      <div class="color-stat-label">Green Intensity</div>
+      <div class="color-stat-value">${labA < -15 ? 'Very Green' : labA < -8 ? 'Green' : labA < -3 ? 'Mild' : 'Pale'}</div>
     </div>
     <div class="color-stat">
       <div class="color-stat-label">Avg Color</div>
       <div class="color-stat-value">R${r} G${g} B${b}</div>
+    </div>
+    <div class="color-stat has-tooltip" tabindex="0">
+      <div class="color-stat-tooltip">Lab a* measures the green–red axis in perceptual color space. More negative = more green. Ceremonial-grade matcha typically scores below −10.</div>
+      <div class="color-stat-label">Lab a* <span class="info-icon">?</span></div>
+      <div class="color-stat-value">${labA.toFixed(1)}</div>
     </div>
   `;
 
@@ -1707,74 +1434,6 @@ fetch('https://api.github.com/repos/kris10270/matcha-match/commits/main', { head
   .then(r => r.text())
   .then(sha => { document.getElementById('versionHash').textContent = 'v.' + sha.slice(0, 7); })
   .catch(() => {});
-
-// ============================================================
-// SANITY CHECK — synthetic patches scored by both scorers
-// ============================================================
-// Builds uniform-color patches for a handful of known colors and runs both the
-// new perceptual scorer and the legacy 41-feature SVR on them, so the behaviour
-// difference is visible (not buried in a black box). The perceptual scorer should
-// put deep greens near 5 and non-greens (white foam, cup beige, brown) near 1.
-const SANITY_CASES = [
-  { name: 'Ideal 5/5',          rgb: [100, 165, 60],  expect: 5 },
-  { name: 'Typical 1/5',         rgb: [170, 175, 110], expect: 1 },
-  { name: 'Ceremonial dark',    rgb: [60, 140, 50],   expect: 5 },
-  { name: 'Vivid ceremonial',   rgb: [80, 175, 50],   expect: 5 },
-  { name: 'Mid cafe green',     rgb: [120, 160, 90],  expect: 3 },
-  { name: 'Pale watery',        rgb: [200, 210, 150], expect: 1 },
-  { name: 'Brown / oxidized',   rgb: [130, 110, 70],  expect: 1 },
-  { name: 'White foam',         rgb: [235, 232, 225], expect: 1 },
-  { name: 'Cup beige',          rgb: [190, 180, 150], expect: 1 },
-];
-
-function makeUniformImageData(w, h, [r, g, b]) {
-  const data = new Uint8ClampedArray(w * h * 4);
-  for (let i = 0; i < w * h; i++) {
-    data[i * 4] = r; data[i * 4 + 1] = g; data[i * 4 + 2] = b; data[i * 4 + 3] = 255;
-  }
-  return { data, width: w, height: h };
-}
-
-async function runSanityCheck() {
-  const panel = document.getElementById('sanityPanel');
-  const body = document.getElementById('sanityBody');
-  panel.classList.remove('hidden');
-  body.innerHTML = '<tr><td colspan="6">Scoring patches…</td></tr>';
-
-  let modelReady = !!(session);
-  if (!modelReady) { try { await loadModel(); modelReady = !!session; } catch (e) { modelReady = false; } }
-
-  const rows = [];
-  for (const c of SANITY_CASES) {
-    const img = makeUniformImageData(400, 400, c.rgb);
-    const perc = extractPerceptualFeatures(img, 400, 400);
-    const { score: pScore } = perceptualScore(perc);
-
-    let mlScore = null;
-    if (modelReady) {
-      try {
-        const { features } = extractFeatures(img, 400, 400);
-        mlScore = await predict(features);
-      } catch (e) { mlScore = null; }
-    }
-
-    const pCls = pScore >= 4 ? 'score-good' : pScore < 2 ? 'score-bad' : '';
-    const mCls = mlScore === null ? '' : (mlScore >= 4 ? 'score-good' : mlScore < 2 ? 'score-bad' : '');
-    const swatch = `rgba(${c.rgb[0]},${c.rgb[1]},${c.rgb[2]},1)`;
-    rows.push(`
-      <tr>
-        <td class="swatch-cell"><span class="sanity-swatch" style="background:${swatch}"></span></td>
-        <td>${c.name}</td>
-        <td>~${c.expect}</td>
-        <td class="num ${pCls}">${pScore.toFixed(2)}</td>
-        <td class="num ${mCls}">${mlScore === null ? '—' : mlScore.toFixed(2)}</td>
-        <td class="num">${perc.greenDomMean.toFixed(0)}</td>
-      </tr>`);
-  }
-  body.innerHTML = rows.join('');
-}
-
-document.getElementById('sanityRunBtn')?.addEventListener('click', runSanityCheck);
 </script>
 </body>
 </html>
